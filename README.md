@@ -1,6 +1,6 @@
 Dockerized [Kodi](https://kodi.tv/download) based on [Debian image](https://hub.docker.com/_/debian).
 
-This is **not** a headless setup, it expects X11 to work inside the docker container which can be tricky, see below.
+This is **not** a headless setup.
 
 # Installation
 
@@ -22,7 +22,6 @@ sudo docker run --mount type=bind,src=/data/media,dst=/media \
   -v /etc/localtime:/etc/localtime:ro -v /etc/timezone:/etc/timezone:ro \
   -p 8080:8080 -p 9090:9090 -p 9777:9777/udp \
   --device /dev/tty0 --device /dev/tty2 --device /dev/dri --device /dev/snd \
-  --cap-add SYS_ADMIN \
   --rm -ti kodi-x11
 ```
 
@@ -34,7 +33,7 @@ sudo docker run --mount type=bind,src=/data/media,dst=/media \
 
 # Troubleshooting
 
-If X11 fails to start with the options above, start from scratch using the `latest` Debian image (instead of `sid-slim`), and then follow these steps:
+If Kodi is "Unable to create GUI", follow these steps:
 
 ### Get things working with extended privileges
 
@@ -53,13 +52,9 @@ If the above does not work, then something's off with the image itself and you n
 
 Once you have a working image, it's time to look at dropping unnecessary privileges.
 
-First, while the container is running with `--privileged`, note the devices in use by running the following command on the host: ``sudo lsof -p `pgrep Xorg` | grep /dev/``
+First, while the container is running with `--privileged`, note the devices in use by running the following command on the host: ``sudo lsof -p `pgrep kodi-xbm` | grep /dev/``
 
-Second, replace the `--privileged` flag with `--cap-add ALL`, and make the necessary devices available within the container with `--device`. Keep running the docker command until you find the right combination. The following error messages are pretty common:
-
-* `parse_vt_settings: Cannot open /dev/tty0 (No such file or directory)`: need to add `/dev/tty0`
-* `xf86OpenConsole: Cannot open virtual console 2 (No such file or directory)`: need to add `/dev/tty2`
-* `no screens found`: need to add `/dev/dri`
+Second, replace the `--privileged` flag with `--cap-add ALL`, and make the necessary devices available within the container with `--device`. Keep running the docker command until you find the right combination.
 
 Once things look good, remove the `--cap-add ALL` flag and see if things still work. If yes, great, you're done, otherwise work through the list of [capabilities](https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities) until you find the necessary one(s).
 

@@ -1,12 +1,10 @@
-ARG DEBIAN_TAG=sid
+ARG DEBIAN_TAG=sid-slim
 
 FROM debian:$DEBIAN_TAG
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get dist-upgrade -y && apt-get -y install xinit kodi xsltproc tzdata
+RUN apt-get update && apt-get dist-upgrade -y && apt-get -y install kodi xsltproc tzdata
 #RUN apt-get -y install net-tools
-
-RUN (echo "allowed_users=anybody" ; echo "needs_root_rights=yes") > /etc/X11/Xwrapper.config
 
 ARG KODI_UID=1000
 ARG KODI_GID=1000
@@ -22,5 +20,4 @@ EXPOSE 8080 9090 9777/udp
 
 USER kodi
 WORKDIR /kodi
-ENTRYPOINT [ "/bin/bash" ]
-CMD ["-c", "xinit /usr/bin/kodi-standalone"]
+ENTRYPOINT [ "/usr/bin/kodi", "--windowing=gbm" ]
