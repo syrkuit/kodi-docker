@@ -1,16 +1,16 @@
-Dockerized [Kodi](https://kodi.tv/download) based on [Debian image](https://hub.docker.com/_/debian).
+Dockerized [Kodi](https://kodi.tv/download) based on [Alpine image](https://hub.docker.com/_/alpine).
 
-This is **not** a headless setup.
+This is **not** a headless setup, Kodi runs in full screen mode using GBM Windowing with HDR support (assuming your monitor is capable) and video hardware acceleration.
 
 # Installation
 
 ```
-sudo docker build --tag kodi-x11 .
+sudo docker build --tag kodi `awk -F : '/^(audio|render|video):/ {printf "%s%s%s%s", " --build-arg KODI_", toupper($1), "=", $3}' /etc/group` .
 ```
 
-By default, it will use Debian `sid-slim` image, you can override the image with `--build-arg DEBIAN_TAG=<tag>`.
+By default, this uses the Alpine `latest` image, you can override the image with `--build-arg ALPINE_TAG=<tag>`.
 
-By default, kodi will run as user kodi with uid 1000, you can override the defaults with
+By default, kodi runs as user kodi with uid 1000, you can override the defaults with
 
 * uid: `--build-arg KODI_UID=1042`
 * gid: `--build-arg KODI_UID=1042`
@@ -18,18 +18,19 @@ By default, kodi will run as user kodi with uid 1000, you can override the defau
 # Usage
 
 ```
-sudo docker run --mount type=bind,src=/data/media,dst=/media \
-  -v /etc/localtime:/etc/localtime:ro -v /etc/timezone:/etc/timezone:ro \
+sudo docker run --mount type=bind,src=/path/to/your/media,dst=/media \
   -p 8080:8080 -p 9090:9090 -p 9777:9777/udp \
-  --device /dev/tty0 --device /dev/tty2 --device /dev/dri --device /dev/snd \
-  --rm -ti kodi-x11
+  --device /dev/dri --device /dev/snd \
+  kodi
 ```
 
 ## Notes
 
-* If you want the kodi state to be accessible outside of docker, create a directory with the correct permissions and add the following argument: `--mount type=bind,src=/path/to/created/directory,dst=/kodi/.kodi`
+* If you want the kodi state to be accessible outside of docker (and to be persisted when you upgrade), create a directory with the correct permissions and add the following argument: `--mount type=bind,src=/path/to/created/directory,dst=/var/lib/kodi/.kodi`
 * Don't forget to add your media, for example `--mount type=bind,src=/path/to/media,dst=/media`. Note that the provided image does not support access over NFS or Samba *within the container*.
-* This image doesn't provide for a working keyboard/mouse, Kodi needs to be controlled via remote.
+* Kodi needs to be controlled via remote, the web server is enabled by default without requiring any password. **Once it is working, set a password** in `Settings → Services → Control → Web server`.
+* To check what HDR types are detected, see `Settings → System information → Video`.
+* I cannot test NVIDIA support and some packages are probably missing, send a PR to fix.
 
 # Troubleshooting
 
